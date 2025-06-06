@@ -9,12 +9,9 @@ export const getAllBooks = async (req, res) => {
         
         let filter = {};
         
-        // Si un paramètre de recherche textuelle est fourni, l'utiliser prioritairement
         if (query) {
-            // Utiliser l'index de texte pour une recherche plus performante
             filter = { $text: { $search: query } };
         } else {
-            // Sinon, utiliser les filtres classiques
             filter = Object.entries({ title, author, types, language })
                 .reduce((acc, [key, value]) => {
                     if (value) {
@@ -33,7 +30,7 @@ export const getAllBooks = async (req, res) => {
                 const fieldName = isDescending ? field.substring(1) : field;
                 acc[fieldName] = isDescending ? -1 : 1;
                 return acc;
-              }, {})
+            }, {})
             : { title: 1 };
 
         // Pagination
@@ -41,7 +38,6 @@ export const getAllBooks = async (req, res) => {
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
 
-        // Exécution des requêtes en parallèle pour de meilleures performances
         const [books, total] = await Promise.all([
             Book.find(filter)
                 .sort(sortOptions)
@@ -73,91 +69,91 @@ export const getAllBooks = async (req, res) => {
 
 // Récupérer un livre par son ID
 export const getBookById = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+            success: false,
+            message: "ID de livre invalide"
+        });
+        }
+
+        const book = await Book.findById(id);
+
+        if (!book) {
+        return res.status(404).json({
+            success: false,
+            message: "Livre non trouvé"
+        });
+        }
+
+        res.status(200).json({
+        success: true,
+        data: book
+        });
+    } catch (error) {
+        res.status(500).json({
         success: false,
-        message: "ID de livre invalide"
-      });
+        message: "Erreur lors de la récupération du livre",
+        error: error.message
+        });
     }
-
-    const book = await Book.findById(id);
-
-    if (!book) {
-      return res.status(404).json({
-        success: false,
-        message: "Livre non trouvé"
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: book
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Erreur lors de la récupération du livre",
-      error: error.message
-    });
-  }
 };
 
 // Créer un nouveau livre
 export const createBook = async (req, res) => {
-  try {
-    const newBook = await Book.create(req.body);
+    try {
+        const newBook = await Book.create(req.body);
 
-    res.status(201).json({
-      success: true,
-      data: newBook
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: "Erreur lors de la création du livre",
-      error: error.message
-    });
-  }
+        res.status(201).json({
+        success: true,
+        data: newBook
+        });
+    } catch (error) {
+        res.status(400).json({
+        success: false,
+        message: "Erreur lors de la création du livre",
+        error: error.message
+        });
+    }
 };
 
 // Mettre à jour un livre
 export const updateBook = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "ID de livre invalide"
-      });
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+            success: false,
+            message: "ID de livre invalide"
+        });
+        }
+
+        const book = await Book.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true
+        });
+
+        if (!book) {
+        return res.status(404).json({
+            success: false,
+            message: "Livre non trouvé"
+        });
+        }
+
+        res.status(200).json({
+        success: true,
+        data: book
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: "Erreur lors de la mise à jour du livre",
+            error: error.message
+        });
     }
-
-    const book = await Book.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true
-    });
-
-    if (!book) {
-      return res.status(404).json({
-        success: false,
-        message: "Livre non trouvé"
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: book
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: "Erreur lors de la mise à jour du livre",
-      error: error.message
-    });
-  }
 };
 
 // Supprimer un livre

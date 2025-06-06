@@ -9,6 +9,8 @@ import pokemonRouter from './routes/pokemons.js';
 import trainerRouter from './routes/trainer.js';
 import booksRouter from './routes/books.js';
 import bookStatsRouter from './routes/bookStats.js';
+import usersRouter from './routes/users.js';
+import loansRouter from './routes/loans.js';
 
 dotenv.config();
 connectDB();
@@ -24,6 +26,8 @@ app.use('/pokemons', pokemonRouter);
 app.use('/trainers', trainerRouter);
 app.use('/books', booksRouter);
 app.use('/book-stats', bookStatsRouter);
+app.use('/users', usersRouter);
+app.use('/loans', loansRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));
