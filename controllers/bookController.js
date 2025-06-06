@@ -2,21 +2,29 @@ import Book from "../models/Book.js";
 import Loan from "../models/Loan.js";
 import mongoose from "mongoose";
 
-// Récupérer tous les livres
+// Récupérer tous les livres avec possibilité de recherche textuelle
 export const getAllBooks = async (req, res) => {
     try {
-        const { title, author, types, language, sort, page = 1, limit = 10 } = req.query;
+        const { title, author, types, language, sort, page = 1, limit = 10, query } = req.query;
         
-        // Construction du filtre avec réduction d'objet
-        const filter = Object.entries({ title, author, types, language })
-            .reduce((acc, [key, value]) => {
-                if (value) {
-                    acc[key] = ['title', 'author'].includes(key) 
-                        ? { $regex: value, $options: 'i' }
-                        : value;
-                }
-                return acc;
-            }, {});
+        let filter = {};
+        
+        // Si un paramètre de recherche textuelle est fourni, l'utiliser prioritairement
+        if (query) {
+            // Utiliser l'index de texte pour une recherche plus performante
+            filter = { $text: { $search: query } };
+        } else {
+            // Sinon, utiliser les filtres classiques
+            filter = Object.entries({ title, author, types, language })
+                .reduce((acc, [key, value]) => {
+                    if (value) {
+                        acc[key] = ['title', 'author'].includes(key) 
+                            ? { $regex: value, $options: 'i' }
+                            : value;
+                    }
+                    return acc;
+                }, {});
+        }
         
         // Construction des options de tri
         const sortOptions = sort 
